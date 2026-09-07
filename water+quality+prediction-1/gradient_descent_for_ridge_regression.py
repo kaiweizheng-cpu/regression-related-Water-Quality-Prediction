@@ -1,15 +1,22 @@
 import numpy as np
 import scipy.io as sio
 
-class MSELoss:
-    def compute_loss(self, y_pred, y_true):
-        return np.mean((y_pred - y_true)**2)
 
-    def compute_grad(self, X, y_pred, y_true):
+class RidgeLoss:
+    def __init__(self, lam=0.1):
+        self.lam = lam  # L2 regularization strength (bias is not penalized)
+
+    def compute_loss(self, y_pred, y_true, w):
+        mse = np.mean((y_pred - y_true) ** 2)
+        penalty = self.lam * np.sum(w ** 2)
+        return mse + penalty
+
+    def compute_grad(self, X, y_pred, y_true, w):
         n = X.shape[0]
-        dw = 2 * X.T @ (y_pred - y_true) / n
+        dw = 2 * X.T @ (y_pred - y_true) / n + 2 * self.lam * w
         db = 2 * np.sum(y_pred - y_true) / n
         return dw, db
+
 
 class GradientDescent:
     def __init__(self, lr=0.02):
@@ -19,6 +26,7 @@ class GradientDescent:
         w = w - self.lr * dw
         b = b - self.lr * db
         return w, b
+
 
 if __name__ == "__main__":
     data = sio.loadmat('water_dataset.mat')
@@ -31,13 +39,13 @@ if __name__ == "__main__":
 
     w = np.zeros(X.shape[1])
     b = 0.0
-    loss_function = MSELoss()
+    loss_function = RidgeLoss(lam=0.1)
     opt = GradientDescent(lr=0.02)
 
     for i in range(50):
         y_pred = X @ w + b
-        loss = loss_function.compute_loss(y_pred, y)
-        dw, db = loss_function.compute_grad(X, y_pred, y)
+        loss = loss_function.compute_loss(y_pred, y, w)
+        dw, db = loss_function.compute_grad(X, y_pred, y, w)
         w, b = opt.step(w, b, dw, db)
 
         if i % 10 == 0:
