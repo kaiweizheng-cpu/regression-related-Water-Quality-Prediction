@@ -2,12 +2,12 @@ import numpy as np
 import scipy.io as sio
 
 class MSELoss:
-    def compute_mse_loss(self, y_pred, y_true):
+    def compute_loss(self, y_pred, y_true):
         return np.mean((y_pred - y_true)**2)
 
-    def compute_grad(self, x, y_pred, y_true):
-        n = len(x)
-        dw = 2 * np.sum((y_pred - y_true) * x) / n
+    def compute_grad(self, X, y_pred, y_true):
+        n = X.shape[0]
+        dw = 2 * X.T @ (y_pred - y_true) / n
         db = 2 * np.sum(y_pred - y_true) / n
         return dw, db
 
@@ -26,21 +26,21 @@ if __name__ == "__main__":
     Y_tr = data['Y_tr']   # (37, 423)
 
     Xs = np.stack([X_tr[0, t] for t in range(X_tr.shape[1])])  # (423, 37, 11)
-    x = Xs[:, :, 1].ravel()
+    X = Xs[:, :, 1].reshape(-1, 1)   # design matrix (n, 1)
     y = Y_tr.T.ravel()
 
-    w = 0.0
+    w = np.zeros(X.shape[1])
     b = 0.0
     loss_function = MSELoss()
     opt = GradientDescent(lr=0.02)
 
     for i in range(50):
-        y_pred = w * x + b
-        loss = loss_function.compute_mse_loss(y_pred, y)
-        dw, db = loss_function.compute_grad(x, y_pred, y)
+        y_pred = X @ w + b
+        loss = loss_function.compute_loss(y_pred, y)
+        dw, db = loss_function.compute_grad(X, y_pred, y)
         w, b = opt.step(w, b, dw, db)
 
         if i % 10 == 0:
-            print(f"iteration{i:3d} | loss={loss:.3f} | w={w:.2f}, b={b:.2f}")
+            print(f"iteration{i:3d} | loss={loss:.3f} | w={w[0]:.2f}, b={b:.2f}")
 
-    print(f"\nfinish：w={w:.2f}, b={b:.2f}")
+    print(f"\nfinish：w={w[0]:.2f}, b={b:.2f}")
