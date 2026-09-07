@@ -4,7 +4,7 @@ import scipy.io as sio
 
 class RidgeLoss:
     def __init__(self, lam=0.1):
-        self.lam = lam  # L2 regularization strength (bias is not penalized)
+        self.lam = lam  # L2 regularization strength
 
     def compute_loss(self, y_pred, y_true, w):
         mse = np.mean((y_pred - y_true) ** 2)
